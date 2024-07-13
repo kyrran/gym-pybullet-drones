@@ -1,19 +1,3 @@
-"""
-Script demonstrating the joint use of simulation and control.
-
-The simulation is run by a `CtrlAviary` environment.
-The control is given by the PID implementation in `DSLPIDControl`.
-
-Example
--------
-In a terminal, run as:
-
-    $ python pid.py
-
-Notes
------
-The drones arm from the ground and then hover at 1 meter altitude.
-"""
 import os
 import time
 import argparse
@@ -24,6 +8,7 @@ import random
 import numpy as np
 import pybullet as p
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
@@ -44,6 +29,17 @@ DEFAULT_CONTROL_FREQ_HZ = 48
 DEFAULT_DURATION_SEC = 12
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
+TRAJECTORY_FILE = 'processed_trajectory_1.csv'  # Use the smoothed trajectory file
+
+def load_waypoints(filename):
+    """Load waypoints from a CSV file."""
+    try:
+        data = pd.read_csv(filename)
+        waypoints = data[['x', 'y', 'z']].values  # Extract x, y, z columns
+        return waypoints
+    except Exception as e:
+        print(f"Error loading waypoints: {e}")
+        return None
 
 def run(
         drone=DEFAULT_DRONES,
@@ -61,21 +57,16 @@ def run(
         colab=DEFAULT_COLAB
         ):
     #### Initialize the simulation #############################
-    H = 1.0  # Hover height set to 1 meter
     INIT_XYZS = np.array([[0, 0, 0] for _ in range(num_drones)])  # Start at ground level
     INIT_RPYS = np.array([[0, 0, i * (np.pi/2)/num_drones] for i in range(num_drones)])
 
-    #### Initialize the ascent trajectory ######################
-    PERIOD = 10
-    NUM_WP = control_freq_hz * PERIOD
-    ASCENT_DURATION = int(NUM_WP / 4)  # Ascent duration is a quarter of the total period
-    TARGET_POS = np.zeros((NUM_WP, 3))
+    #### Load the waypoints from the trajectory file ###########
+    TARGET_POS = load_waypoints(TRAJECTORY_FILE)
+    if TARGET_POS is None:
+        print("Failed to load waypoints. Exiting.")
+        return
 
-    for i in range(NUM_WP):
-        if i < ASCENT_DURATION:
-            TARGET_POS[i, :] = [0, 0, (H / ASCENT_DURATION) * i]
-        else:
-            TARGET_POS[i, :] = [0, 0, H]
+    NUM_WP = TARGET_POS.shape[0]
     wp_counters = np.array([0 for _ in range(num_drones)])  # Ensure wp_counters is initialized
 
     #### Create the environment ################################
@@ -112,15 +103,12 @@ def run(
     START = time.time()
     for i in range(0, int(duration_sec * env.CTRL_FREQ)):
 
-        #### Make it rain rubber ducks #############################
-        # if i/env.SIM_FREQ>5 and i%10==0 and i/env.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [0+random.gauss(0, 0.3),-0.5+random.gauss(0, 0.3),3], p.getQuaternionFromEuler([random.randint(0,360),random.randint(0,360),random.randint(0,360)]), physicsClientId=PYB_CLIENT)
-
         #### Step the simulation ###################################
         obs, reward, terminated, truncated, info = env.step(action)
 
         #### Compute control for the current way point #############
         for j in range(num_drones):
-            wp_index = min(wp_counters[j], ASCENT_DURATION - 1)  # Cap wp_index to prevent looping back to ascent
+            wp_index = min(wp_counters[j], NUM_WP - 1)  # Cap wp_index to prevent overflow
             action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
                                                                  state=obs[j],
                                                                  target_pos=TARGET_POS[wp_index, :],
@@ -132,6 +120,7 @@ def run(
 
         #### Log the simulation ####################################
         for j in range(num_drones):
+            wp_index = min(wp_counters[j], NUM_WP - 1)  # Cap wp_index to prevent overflow
             logger.log(drone=j,
                        timestamp=i / env.CTRL_FREQ,
                        state=obs[j],
@@ -158,7 +147,7 @@ def run(
 
 if __name__ == "__main__":
     #### Define and parse (optional) arguments for the script ##
-    parser = argparse.ArgumentParser(description='Helix flight script using CtrlAviary and DSLPIDControl')
+    parser = argparse.ArgumentParser(description='Flight script using CtrlAviary and DSLPIDControl')
     parser.add_argument('--drone', default=DEFAULT_DRONES, type=DroneModel, help='Drone model (default: CF2X)', metavar='', choices=DroneModel)
     parser.add_argument('--num_drones', default=DEFAULT_NUM_DRONES, type=int, help='Number of drones (default: 3)', metavar='')
     parser.add_argument('--physics', default=DEFAULT_PHYSICS, type=Physics, help='Physics updates (default: PYB)', metavar='', choices=Physics)
