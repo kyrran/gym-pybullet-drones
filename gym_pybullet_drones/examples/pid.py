@@ -150,7 +150,39 @@ def run(
     #### Run the simulation ####################################
     action = np.zeros((num_drones, 4))
     START = time.time()
-    for i in range(0, int(duration_sec * env.CTRL_FREQ)):
+
+    # Hover at 1 meter for a few seconds before starting the trajectory
+    HOVER_DURATION = 2 * env.CTRL_FREQ  # Hover for 2 seconds
+
+    for i in range(0, HOVER_DURATION):
+        #### Step the simulation ###################################
+        obs, reward, terminated, truncated, info = env.step(action)
+
+        #### Compute control for hovering at 1 meter ################
+        for j in range(num_drones):
+            action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
+                                                                 state=obs[j],
+                                                                 target_pos=[0, 0, 1],  # Hover at 1 meter
+                                                                 target_rpy=[0, 0, 0]
+                                                                 )
+
+        #### Log the simulation ####################################
+        for j in range(num_drones):
+            logger.log(drone=j,
+                       timestamp=i / env.CTRL_FREQ,
+                       state=obs[j],
+                       control=np.hstack([[0, 0, 1], [0, 0, 0], np.zeros(6)])
+                       )
+
+        #### Printout ##############################################
+        env.render()
+
+        #### Sync the simulation ###################################
+        if gui:
+            sync(i, START, env.CTRL_TIMESTEP)
+
+    # Start following the trajectory
+    for i in range(HOVER_DURATION, int(duration_sec * env.CTRL_FREQ)):
 
         #### Step the simulation ###################################
         obs, reward, terminated, truncated, info = env.step(action)
