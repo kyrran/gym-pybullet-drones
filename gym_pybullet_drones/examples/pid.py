@@ -2,13 +2,15 @@ import os
 import time
 import argparse
 from datetime import datetime
-import pdb
 import math
 import random
 import numpy as np
 import pybullet as p
 import matplotlib.pyplot as plt
 import pandas as pd
+import toppra as ta
+import toppra.constraint as constraint
+import toppra.algorithm as algo
 
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
@@ -16,6 +18,7 @@ from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 
+# Default parameters
 DEFAULT_DRONES = DroneModel("cf2x")
 DEFAULT_NUM_DRONES = 1
 DEFAULT_PHYSICS = Physics("pyb")
@@ -29,7 +32,8 @@ DEFAULT_CONTROL_FREQ_HZ = 48
 DEFAULT_DURATION_SEC = 12
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
-TRAJECTORY_FILE = 'processed_trajectory_1.csv'  # Use the smoothed trajectory file
+TRAJECTORY_FILE = 'trajectory_1.csv'  # Original trajectory file
+PROCESSED_TRAJECTORY_FILE = 'processed_trajectory_1.csv'  # Smoothed trajectory file
 
 def load_waypoints(filename):
     """Load waypoints from a CSV file."""
@@ -40,6 +44,48 @@ def load_waypoints(filename):
     except Exception as e:
         print(f"Error loading waypoints: {e}")
         return None
+
+def process_trajectory(file_path, processed_file_path):
+    # Load the CSV file
+    trajectory_data = pd.read_csv(file_path)
+
+    # Extract x, y, z columns for processing
+    waypoints = trajectory_data[['x', 'y', 'z']].values
+
+    # Define the velocity and acceleration limits
+    vlim = np.array([1, 1, 1])  # velocity limits in each axis
+    alim = np.array([0.5, 0.5, 0.5])  # acceleration limits in each axis
+
+    # Create path from waypoints
+    path = ta.SplineInterpolator(np.linspace(0, 1, len(waypoints)), waypoints)
+
+    # Create velocity and acceleration constraints
+    pc_vel = constraint.JointVelocityConstraint(vlim)
+    pc_acc = constraint.JointAccelerationConstraint(alim)
+
+    # Setup the parameterization problem
+    instance = algo.TOPPRA([pc_vel, pc_acc], path, solver_wrapper='seidel')
+
+    # Compute the trajectory
+    jnt_traj = instance.compute_trajectory(0, 0)
+
+    # Sample the trajectory
+    N_samples = 1000
+    ss = np.linspace(0, jnt_traj.duration, N_samples)
+    qs = jnt_traj(ss)
+
+    # Extract the x, y, z components of the trajectory
+    x = qs[:, 0]
+    y = qs[:, 1]
+    z = qs[:, 2]
+
+    # Save the processed waypoints to a new CSV file
+    processed_waypoints = pd.DataFrame({
+        'x': x,
+        'y': y,
+        'z': z
+    })
+    processed_waypoints.to_csv(processed_file_path, index=False)
 
 def run(
         drone=DEFAULT_DRONES,
@@ -56,16 +102,19 @@ def run(
         output_folder=DEFAULT_OUTPUT_FOLDER,
         colab=DEFAULT_COLAB
         ):
-    #### Initialize the simulation #############################
-    INIT_XYZS = np.array([[0, 0, 0] for _ in range(num_drones)])  # Start at ground level
-    INIT_RPYS = np.array([[0, 0, i * (np.pi/2)/num_drones] for i in range(num_drones)])
-
+    #### Process the trajectory ################################
+    process_trajectory(TRAJECTORY_FILE, PROCESSED_TRAJECTORY_FILE)
+    
     #### Load the waypoints from the trajectory file ###########
-    TARGET_POS = load_waypoints(TRAJECTORY_FILE)
+    TARGET_POS = load_waypoints(PROCESSED_TRAJECTORY_FILE)
     if TARGET_POS is None:
         print("Failed to load waypoints. Exiting.")
         return
 
+    #### Initialize the simulation #############################
+    INIT_XYZS = np.array([[0, 0, 0] for _ in range(num_drones)])  # Start at ground level
+    INIT_RPYS = np.array([[0, 0, i * (np.pi/2)/num_drones] for i in range(num_drones)])
+    
     NUM_WP = TARGET_POS.shape[0]
     wp_counters = np.array([0 for _ in range(num_drones)])  # Ensure wp_counters is initialized
 
@@ -149,13 +198,13 @@ if __name__ == "__main__":
     #### Define and parse (optional) arguments for the script ##
     parser = argparse.ArgumentParser(description='Flight script using CtrlAviary and DSLPIDControl')
     parser.add_argument('--drone', default=DEFAULT_DRONES, type=DroneModel, help='Drone model (default: CF2X)', metavar='', choices=DroneModel)
-    parser.add_argument('--num_drones', default=DEFAULT_NUM_DRONES, type=int, help='Number of drones (default: 3)', metavar='')
+    parser.add_argument('--num_drones', default=DEFAULT_NUM_DRONES, type=int, help='Number of drones (default: 1)', metavar='')
     parser.add_argument('--physics', default=DEFAULT_PHYSICS, type=Physics, help='Physics updates (default: PYB)', metavar='', choices=Physics)
     parser.add_argument('--gui', default=DEFAULT_GUI, type=str2bool, help='Whether to use PyBullet GUI (default: True)', metavar='')
     parser.add_argument('--record_video', default=DEFAULT_RECORD_VISION, type=str2bool, help='Whether to record a video (default: False)', metavar='')
     parser.add_argument('--plot', default=DEFAULT_PLOT, type=str2bool, help='Whether to plot the simulation results (default: True)', metavar='')
     parser.add_argument('--user_debug_gui', default=DEFAULT_USER_DEBUG_GUI, type=str2bool, help='Whether to add debug lines and parameters to the GUI (default: False)', metavar='')
-    parser.add_argument('--obstacles', default=DEFAULT_OBSTACLES, type=str2bool, help='Whether to add obstacles to the environment (default: True)', metavar='')
+    parser.add_argument('--obstacles', default=DEFAULT_OBSTACLES, type=str2bool, help='Whether to add obstacles to the environment (default: False)', metavar='')
     parser.add_argument('--simulation_freq_hz', default=DEFAULT_SIMULATION_FREQ_HZ, type=int, help='Simulation frequency in Hz (default: 240)', metavar='')
     parser.add_argument('--control_freq_hz', default=DEFAULT_CONTROL_FREQ_HZ, type=int, help='Control frequency in Hz (default: 48)', metavar='')
     parser.add_argument('--duration_sec', default=DEFAULT_DURATION_SEC, type=int, help='Duration of the simulation in seconds (default: 12)', metavar='')
