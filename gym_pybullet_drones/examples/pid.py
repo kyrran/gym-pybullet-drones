@@ -1,19 +1,22 @@
+# python pid.py --hover_height 1.5 --trajectory_file trajectory_1.csv --processed_trajectory_file processed_trajectory_1.csv
+
 import os
 import time
 import argparse
-from datetime import datetime
 import pdb
 import math
 import random
 import numpy as np
 import pybullet as p
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
+from process_trajectory import load_waypoints, process_trajectory
 
 DEFAULT_DRONES = DroneModel("cf2x")
 DEFAULT_NUM_DRONES = 1
@@ -25,10 +28,12 @@ DEFAULT_USER_DEBUG_GUI = False
 DEFAULT_OBSTACLES = False
 DEFAULT_SIMULATION_FREQ_HZ = 240
 DEFAULT_CONTROL_FREQ_HZ = 48
-DEFAULT_DURATION_SEC = 12
+DEFAULT_DURATION_SEC = 30
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
-DEFAULT_HOVER_HEIGHT = 2.0  # Default hover height set to 1 meter
+DEFAULT_HOVER_HEIGHT = 1.0  # Default hover height set to 1 meter
+DEFAULT_PROCESSED_TRAJECTORY_FILE = 'processed_trajectory_1.csv'  # Default trajectory file
+DEFAULT_TRAJECTORY_FILE = 'trajectory_1.csv'
 
 def run(
         drone=DEFAULT_DRONES,
@@ -44,24 +49,34 @@ def run(
         duration_sec=DEFAULT_DURATION_SEC,
         output_folder=DEFAULT_OUTPUT_FOLDER,
         colab=DEFAULT_COLAB,
-        hover_height=DEFAULT_HOVER_HEIGHT  # Add hover height parameter
+        hover_height=DEFAULT_HOVER_HEIGHT,  # Add hover height parameter
+        trajectory_file=DEFAULT_TRAJECTORY_FILE,  # Add trajectory file parameter
+        processed_trajectory_file=DEFAULT_PROCESSED_TRAJECTORY_FILE  # Add trajectory file parameter
         ):
     #### Initialize the simulation #############################
     H = hover_height  # Use the provided hover height
     INIT_XYZS = np.array([[0, 0, 0] for _ in range(num_drones)])  # Start at ground level
     INIT_RPYS = np.array([[0, 0, i * (np.pi/2)/num_drones] for i in range(num_drones)])
 
+    #### Load the trajectory from CSV file #####################
+    process_trajectory(trajectory_file, processed_trajectory_file, [0,0,hover_height])
+    trajectory_points = load_waypoints(processed_trajectory_file)
+
     #### Initialize the ascent trajectory ######################
     PERIOD = 10
     NUM_WP = control_freq_hz * PERIOD
     ASCENT_DURATION = int(NUM_WP / 4)  # Ascent duration is a quarter of the total period
-    TARGET_POS = np.zeros((NUM_WP, 3))
+    TARGET_POS = np.zeros((NUM_WP + len(trajectory_points), 3))
 
     for i in range(NUM_WP):
         if i < ASCENT_DURATION:
             TARGET_POS[i, :] = [0, 0, (H / ASCENT_DURATION) * i]
         else:
             TARGET_POS[i, :] = [0, 0, H]
+
+    #### Append the trajectory points to the target positions ###
+    TARGET_POS[NUM_WP:NUM_WP + len(trajectory_points), :] = trajectory_points
+
     wp_counters = np.array([0 for _ in range(num_drones)])  # Ensure wp_counters is initialized
 
     #### Create the environment ################################
@@ -98,15 +113,12 @@ def run(
     START = time.time()
     for i in range(0, int(duration_sec * env.CTRL_FREQ)):
 
-        #### Make it rain rubber ducks #############################
-        # if i/env.SIM_FREQ>5 and i%10==0 and i/env.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [0+random.gauss(0, 0.3),-0.5+random.gauss(0, 0.3),3], p.getQuaternionFromEuler([random.randint(0,360),random.randint(0,360),random.randint(0,360)]), physicsClientId=PYB_CLIENT)
-
         #### Step the simulation ###################################
         obs, reward, terminated, truncated, info = env.step(action)
 
         #### Compute control for the current way point #############
         for j in range(num_drones):
-            wp_index = min(wp_counters[j], ASCENT_DURATION - 1)  # Cap wp_index to prevent looping back to ascent
+            wp_index = min(wp_counters[j], len(TARGET_POS) - 1)  # Ensure wp_index doesn't exceed target positions
             action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
                                                                  state=obs[j],
                                                                  target_pos=TARGET_POS[wp_index, :],
@@ -159,6 +171,10 @@ if __name__ == "__main__":
     parser.add_argument('--output_folder', default=DEFAULT_OUTPUT_FOLDER, type=str, help='Folder where to save logs (default: "results")', metavar='')
     parser.add_argument('--colab', default=DEFAULT_COLAB, type=bool, help='Whether example is being run by a notebook (default: "False")', metavar='')
     parser.add_argument('--hover_height', default=DEFAULT_HOVER_HEIGHT, type=float, help='Hover height in meters (default: 1.0)', metavar='')  # Add hover height argument
+    parser.add_argument('--trajectory_file', default=DEFAULT_TRAJECTORY_FILE, type=str, help='CSV file with trajectory points (default: "trajectory.csv")', metavar='')  # Add trajectory file argument
+    parser.add_argument('--processed_trajectory_file', default=DEFAULT_PROCESSED_TRAJECTORY_FILE, type=str, help='CSV file with processed trajectory points (default: "trajectory.csv")', metavar='')  # Add trajectory file argument
+    
+    
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))
