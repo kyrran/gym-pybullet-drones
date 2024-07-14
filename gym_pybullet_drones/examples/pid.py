@@ -63,7 +63,7 @@ def run(
     trajectory_points = load_waypoints(processed_trajectory_file)
 
     #### Initialize the ascent trajectory ######################
-    PERIOD = 10
+    PERIOD = 3
     NUM_WP = control_freq_hz * PERIOD
     ASCENT_DURATION = int(NUM_WP / 4)  # Ascent duration is a quarter of the total period
     TARGET_POS = np.zeros((NUM_WP + len(trajectory_points), 3))
