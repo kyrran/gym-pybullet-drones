@@ -1,5 +1,5 @@
 # python pid.py --hover_height 1.5 --trajectory_file trajectory_1.csv --processed_trajectory_file processed_trajectory_1.csv
-
+# assume the drone power off after the last waypoint
 import os
 import time
 import argparse
