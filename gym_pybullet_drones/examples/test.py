@@ -53,8 +53,6 @@ def run(
         colab=DEFAULT_COLAB
         ):
     #### Process the trajectory ################################
-    process_trajectory(TRAJECTORY_FILE, PROCESSED_TRAJECTORY_FILE)
-    
     #### Load the waypoints from the trajectory file ###########
     TARGET_POS = load_waypoints(PROCESSED_TRAJECTORY_FILE)
     if TARGET_POS is None:
@@ -98,8 +96,8 @@ def run(
         ctrl = [DSLPIDControl(drone_model=drone) for _ in range(num_drones)]
 
     #### Create and attach the tether ##########################
-    tether_length = 1.0
-    tether = Tether(length=tether_length, physics_client=PYB_CLIENT, num_segments=50)
+    tether_length = 0.5
+    tether = Tether(length=tether_length, physics_client=PYB_CLIENT, num_segments=20)
     drone_bottom_offset = np.array([0, 0, -0.001])
     tether.create_tether(INIT_XYZS[0])
     tether.attach_to_drone(env.DRONE_IDS[0], drone_bottom_offset)
