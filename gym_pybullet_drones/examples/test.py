@@ -1,16 +1,10 @@
 import os
 import time
 import argparse
-from datetime import datetime
-import math
-import random
 import numpy as np
 import pybullet as p
 import matplotlib.pyplot as plt
 import pandas as pd
-import toppra as ta
-import toppra.constraint as constraint
-import toppra.algorithm as algo
 
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
@@ -19,8 +13,8 @@ from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from process_trajectory import load_waypoints, process_trajectory
 from tether import Tether
+from weight import Weight
 
-# Default parameters
 DEFAULT_DRONES = DroneModel("cf2x")
 DEFAULT_NUM_DRONES = 1
 DEFAULT_PHYSICS = Physics("pyb")
@@ -34,8 +28,9 @@ DEFAULT_CONTROL_FREQ_HZ = 48
 DEFAULT_DURATION_SEC = 30
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
-TRAJECTORY_FILE = 'trajectory_1.csv'  # Original trajectory file
-PROCESSED_TRAJECTORY_FILE = 'processed_trajectory_1.csv'  # Smoothed trajectory file
+DEFAULT_HOVER_HEIGHT = 1.0  # Default hover height set to 1 meter
+DEFAULT_PROCESSED_TRAJECTORY_FILE = 'processed_trajectory_1.csv'  # Default trajectory file
+DEFAULT_TRAJECTORY_FILE = 'trajectory_1.csv'
 
 def run(
         drone=DEFAULT_DRONES,
@@ -50,20 +45,35 @@ def run(
         control_freq_hz=DEFAULT_CONTROL_FREQ_HZ,
         duration_sec=DEFAULT_DURATION_SEC,
         output_folder=DEFAULT_OUTPUT_FOLDER,
-        colab=DEFAULT_COLAB
+        colab=DEFAULT_COLAB,
+        hover_height=DEFAULT_HOVER_HEIGHT,  # Add hover height parameter
+        trajectory_file=DEFAULT_TRAJECTORY_FILE,  # Add trajectory file parameter
+        processed_trajectory_file=DEFAULT_PROCESSED_TRAJECTORY_FILE  # Add processed trajectory file parameter
         ):
-    #### Process the trajectory ################################
-    #### Load the waypoints from the trajectory file ###########
-    TARGET_POS = load_waypoints(PROCESSED_TRAJECTORY_FILE)
-    if TARGET_POS is None:
-        print("Failed to load waypoints. Exiting.")
-        return
-
     #### Initialize the simulation #############################
+    H = hover_height  # Use the provided hover height
     INIT_XYZS = np.array([[0, 0, 0] for _ in range(num_drones)])  # Start at ground level
     INIT_RPYS = np.array([[0, 0, i * (np.pi/2)/num_drones] for i in range(num_drones)])
+
+    #### Load the trajectory from CSV file #####################
+    process_trajectory(trajectory_file, processed_trajectory_file, [0, 0, hover_height])
+    trajectory_points = load_waypoints(processed_trajectory_file)
     
-    NUM_WP = TARGET_POS.shape[0]
+    #### Initialize the ascent trajectory ######################
+    PERIOD = 3
+    NUM_WP = control_freq_hz * PERIOD
+    ASCENT_DURATION = int(NUM_WP / 4)  # Ascent duration is a quarter of the total period
+    TARGET_POS = np.zeros((NUM_WP + len(trajectory_points), 3))
+
+    for i in range(NUM_WP):
+        if i < ASCENT_DURATION:
+            TARGET_POS[i, :] = [0, 0, (H / ASCENT_DURATION) * i]
+        else:
+            TARGET_POS[i, :] = [0, 0, H]
+
+    #### Append the trajectory points to the target positions ###
+    TARGET_POS[NUM_WP:NUM_WP + len(trajectory_points), :] = trajectory_points
+
     wp_counters = np.array([0 for _ in range(num_drones)])  # Ensure wp_counters is initialized
 
     #### Create the environment ################################
@@ -95,56 +105,29 @@ def run(
     if drone in [DroneModel.CF2X, DroneModel.CF2P]:
         ctrl = [DSLPIDControl(drone_model=drone) for _ in range(num_drones)]
 
-    #### Create and attach the tether ##########################
-    tether_length = 0.5
+    #### Create and attach the tether with payload #############
+    tether_length = 1.0
     tether = Tether(length=tether_length, physics_client=PYB_CLIENT, num_segments=20)
     drone_bottom_offset = np.array([0, 0, -0.001])
     tether.create_tether(INIT_XYZS[0])
     tether.attach_to_drone(env.DRONE_IDS[0], drone_bottom_offset)
 
+    #### Create and attach the weight (payload) ################
+    payload_start_position = INIT_XYZS[0] - np.array([0, 0, tether_length])
+    weight = Weight(payload_start_position)
+    tether.attach_weight(weight)
+
     #### Run the simulation ####################################
     action = np.zeros((num_drones, 4))
     START = time.time()
-
-    # Hover at 1 meter for a few seconds before starting the trajectory
-    HOVER_DURATION = 2 * env.CTRL_FREQ  # Hover for 2 seconds
-
-    for i in range(0, HOVER_DURATION):
-        #### Step the simulation ###################################
-        obs, reward, terminated, truncated, info = env.step(action)
-
-        #### Compute control for hovering at 1 meter ################
-        for j in range(num_drones):
-            action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
-                                                                 state=obs[j],
-                                                                 target_pos=[0, 0, 1],  # Hover at 1 meter
-                                                                 target_rpy=[0, 0, 0]
-                                                                 )
-
-        #### Log the simulation ####################################
-        for j in range(num_drones):
-            logger.log(drone=j,
-                       timestamp=i / env.CTRL_FREQ,
-                       state=obs[j],
-                       control=np.hstack([[0, 0, 1], [0, 0, 0], np.zeros(6)])
-                       )
-
-        #### Printout ##############################################
-        env.render()
-
-        #### Sync the simulation ###################################
-        if gui:
-            sync(i, START, env.CTRL_TIMESTEP)
-
-    # Start following the trajectory
-    for i in range(HOVER_DURATION, int(duration_sec * env.CTRL_FREQ)):
+    for i in range(0, int(duration_sec * env.CTRL_FREQ)):
 
         #### Step the simulation ###################################
         obs, reward, terminated, truncated, info = env.step(action)
 
         #### Compute control for the current way point #############
         for j in range(num_drones):
-            wp_index = min(wp_counters[j], NUM_WP - 1)  # Cap wp_index to prevent overflow
+            wp_index = min(wp_counters[j], len(TARGET_POS) - 1)  # Ensure wp_index doesn't exceed target positions
             action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
                                                                  state=obs[j],
                                                                  target_pos=TARGET_POS[wp_index, :],
@@ -156,7 +139,6 @@ def run(
 
         #### Log the simulation ####################################
         for j in range(num_drones):
-            wp_index = min(wp_counters[j], NUM_WP - 1)  # Cap wp_index to prevent overflow
             logger.log(drone=j,
                        timestamp=i / env.CTRL_FREQ,
                        state=obs[j],
@@ -183,7 +165,7 @@ def run(
 
 if __name__ == "__main__":
     #### Define and parse (optional) arguments for the script ##
-    parser = argparse.ArgumentParser(description='Flight script using CtrlAviary and DSLPIDControl')
+    parser = argparse.ArgumentParser(description='Helix flight script using CtrlAviary and DSLPIDControl')
     parser.add_argument('--drone', default=DEFAULT_DRONES, type=DroneModel, help='Drone model (default: CF2X)', metavar='', choices=DroneModel)
     parser.add_argument('--num_drones', default=DEFAULT_NUM_DRONES, type=int, help='Number of drones (default: 1)', metavar='')
     parser.add_argument('--physics', default=DEFAULT_PHYSICS, type=Physics, help='Physics updates (default: PYB)', metavar='', choices=Physics)
@@ -194,9 +176,13 @@ if __name__ == "__main__":
     parser.add_argument('--obstacles', default=DEFAULT_OBSTACLES, type=str2bool, help='Whether to add obstacles to the environment (default: False)', metavar='')
     parser.add_argument('--simulation_freq_hz', default=DEFAULT_SIMULATION_FREQ_HZ, type=int, help='Simulation frequency in Hz (default: 240)', metavar='')
     parser.add_argument('--control_freq_hz', default=DEFAULT_CONTROL_FREQ_HZ, type=int, help='Control frequency in Hz (default: 48)', metavar='')
-    parser.add_argument('--duration_sec', default=DEFAULT_DURATION_SEC, type=int, help='Duration of the simulation in seconds (default: 12)', metavar='')
+    parser.add_argument('--duration_sec', default=DEFAULT_DURATION_SEC, type=int, help='Duration of the simulation in seconds (default: 30)', metavar='')
     parser.add_argument('--output_folder', default=DEFAULT_OUTPUT_FOLDER, type=str, help='Folder where to save logs (default: "results")', metavar='')
     parser.add_argument('--colab', default=DEFAULT_COLAB, type=bool, help='Whether example is being run by a notebook (default: "False")', metavar='')
+    parser.add_argument('--hover_height', default=DEFAULT_HOVER_HEIGHT, type=float, help='Hover height in meters (default: 1.0)', metavar='')  # Add hover height argument
+    parser.add_argument('--trajectory_file', default=DEFAULT_TRAJECTORY_FILE, type=str, help='CSV file with trajectory points (default: "trajectory_1.csv")', metavar='')  # Add trajectory file argument
+    parser.add_argument('--processed_trajectory_file', default=DEFAULT_PROCESSED_TRAJECTORY_FILE, type=str, help='CSV file with processed trajectory points (default: "processed_trajectory_1.csv")', metavar='')  # Add processed trajectory file argument
+    
     ARGS = parser.parse_args()
 
     run(**vars(ARGS))

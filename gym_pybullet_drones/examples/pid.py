@@ -61,7 +61,8 @@ def run(
     #### Load the trajectory from CSV file #####################
     process_trajectory(trajectory_file, processed_trajectory_file, [0,0,hover_height])
     trajectory_points = load_waypoints(processed_trajectory_file)
-
+    
+    # trajectory_points = load_waypoints(trajectory_file)
     #### Initialize the ascent trajectory ######################
     PERIOD = 3
     NUM_WP = control_freq_hz * PERIOD
