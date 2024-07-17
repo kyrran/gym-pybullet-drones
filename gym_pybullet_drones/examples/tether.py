@@ -3,7 +3,7 @@ import pybullet as p
 
 class Tether:
     RADIUS = 0.001
-    MASS = 0.0001
+    MASS = 0.000001
 
     def __init__(self, length: float, physics_client: int, num_segments: int = 20) -> None:
         assert isinstance(length, float), "length must be an instance of float"
@@ -72,7 +72,9 @@ class Tether:
         assert isinstance(child_body_id, int), "child_body_id must be an instance of int"
         assert isinstance(parent_frame_pos, np.ndarray), "parent_frame_pos must be an instance of np.ndarray"
         assert isinstance(child_frame_pos, np.ndarray), "child_frame_pos must be an instance of np.ndarray"
-
+        
+        # Use a fixed point between the drone and the tether
+        # TODO: Use a more realistic version of the joints
         p.createConstraint(parentBodyUniqueId=parent_body_id,
                            parentLinkIndex=-1,
                            childBodyUniqueId=child_body_id,
