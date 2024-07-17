@@ -136,14 +136,18 @@ def run(
 
         #### Go to the next way point ##############################
         wp_counters += 1
-
+        
+        #### Get payload position ##################################
+        payload_position = p.getBasePositionAndOrientation(weight.weight_id)[0]
+        
         #### Log the simulation ####################################
         for j in range(num_drones):
             logger.log(drone=j,
                        timestamp=i / env.CTRL_FREQ,
                        state=obs[j],
-                       control=np.hstack([TARGET_POS[wp_index, :], INIT_RPYS[j, :], np.zeros(6)])
-                       )
+                       control=np.hstack([TARGET_POS[wp_index, :], INIT_RPYS[j, :], np.zeros(6)]),
+                       payload_position=payload_position  # Log the payload position
+                    )
 
         #### Printout ##############################################
         env.render()

@@ -128,7 +128,7 @@ def run(
 
         #### Go to the next way point ##############################
         wp_counters += 1
-
+    
         #### Log the simulation ####################################
         for j in range(num_drones):
             logger.log(drone=j,
