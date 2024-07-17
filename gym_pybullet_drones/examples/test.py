@@ -14,6 +14,7 @@ from gym_pybullet_drones.utils.utils import sync, str2bool
 from process_trajectory import load_waypoints, process_trajectory
 from tether import Tether
 from weight import Weight
+from branch import Branch
 
 DEFAULT_DRONES = DroneModel("cf2x")
 DEFAULT_NUM_DRONES = 1
@@ -104,11 +105,18 @@ def run(
     #### Initialize the controllers ############################
     if drone in [DroneModel.CF2X, DroneModel.CF2P]:
         ctrl = [DSLPIDControl(drone_model=drone) for _ in range(num_drones)]
-
+        
+        
+    #### Add a tree branch to the environment ##################
+    branch = Branch()  # Create an instance of the Environment class
+    branch_position = [0, 0, 2.7]  # Example position for the branch
+    branch.add_tree_branch(position=branch_position)
+    
+    
     #### Create and attach the tether with payload #############
     tether_length = 1.0
     tether = Tether(length=tether_length, physics_client=PYB_CLIENT, num_segments=20)
-    drone_bottom_offset = np.array([0, 0, -0.001])
+    drone_bottom_offset = np.array([0, 0, -0.01])
     tether.create_tether(INIT_XYZS[0])
     tether.attach_to_drone(env.DRONE_IDS[0], drone_bottom_offset)
 
@@ -116,6 +124,9 @@ def run(
     payload_start_position = INIT_XYZS[0] - np.array([0, 0, tether_length])
     weight = Weight(payload_start_position)
     tether.attach_weight(weight)
+    
+    
+
 
     #### Run the simulation ####################################
     action = np.zeros((num_drones, 4))
