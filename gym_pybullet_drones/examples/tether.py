@@ -15,7 +15,7 @@ class Tether:
         self.length = length
         self.num_segments = num_segments
         self.segment_length = length / num_segments
-        self.segment_mass = self.MASS  # Distribute the mass across the segments
+        self.segment_mass = self.MASS
         self.segments = []
 
         self._parent_frame_pos = np.array([0, 0, -0.5 * self.segment_length], dtype=np.float32)
@@ -32,9 +32,8 @@ class Tether:
     def create_tether(self, top_position: np.ndarray) -> None:
         assert isinstance(top_position, np.ndarray), "top_position must be an instance of np.ndarray"
 
-        self.top_position = top_position  # Store top position for later use
+        self.top_position = top_position
 
-        # Create each segment
         for i in range(self.num_segments):
             segment_top_position = [
                 top_position[0],
@@ -47,12 +46,10 @@ class Tether:
                 segment_top_position[2] - 0.5 * self.segment_length
             ]
 
-            # Collision and visual shapes
             collisionShapeId = p.createCollisionShape(p.GEOM_CYLINDER, radius=self.RADIUS, height=self.segment_length)
             visualShapeId = p.createVisualShape(p.GEOM_CYLINDER, radius=self.RADIUS,
                                                 length=self.segment_length, rgbaColor=[1, 0, 1, 1])
 
-            # Create the segment
             segment_id = p.createMultiBody(baseMass=self.segment_mass,
                                            baseCollisionShapeIndex=collisionShapeId,
                                            baseVisualShapeIndex=visualShapeId,
@@ -62,46 +59,13 @@ class Tether:
 
             p.changeDynamics(segment_id, -1, lateralFriction=1.2)
 
-            # Connect this segment to the previous one (if not the first)
             if i > 0:
-                self.create_rotational_joint(
+                self.create_fixed_joint(
                     parent_body_id=self.segments[i - 1],
                     child_body_id=segment_id,
                     parent_frame_pos=self._parent_frame_pos,
                     child_frame_pos=self._child_frame_pos
                 )
-
-    def create_rotational_joint(self, parent_body_id: int, child_body_id: int, parent_frame_pos: np.ndarray,
-                                child_frame_pos: np.ndarray) -> None:
-        assert isinstance(parent_body_id, int), "parent_body_id must be an instance of int"
-        assert isinstance(child_body_id, int), "child_body_id must be an instance of int"
-        assert isinstance(parent_frame_pos, np.ndarray), "parent_frame_pos must be an instance of np.ndarray"
-        assert isinstance(child_frame_pos, np.ndarray), "child_frame_pos must be an instance of np.ndarray"
-
-        p.createConstraint(parentBodyUniqueId=parent_body_id,
-                           parentLinkIndex=-1,
-                           childBodyUniqueId=child_body_id,
-                           childLinkIndex=-1,
-                           jointType=p.JOINT_POINT2POINT,
-                           jointAxis=[0, 0, 0],
-                           parentFramePosition=parent_frame_pos,
-                           childFramePosition=child_frame_pos,
-                           parentFrameOrientation=[0, 0, 0, 1],
-                           childFrameOrientation=[0, 0, 0, 1])
-
-    def attach_to_drone(self, drone_id: Any, drone_bottom_offset: np.ndarray) -> None:
-        assert isinstance(drone_bottom_offset, np.ndarray), "drone_bottom_offset must be an instance of np.ndarray"
-
-        # Convert drone_id to int if it's not already
-        drone_id = int(drone_id)
-
-        # Use the create_fixed_joint function to attach the top segment to the drone
-        self.create_fixed_joint(
-            parent_body_id=drone_id,
-            child_body_id=self.segments[0],
-            parent_frame_pos=drone_bottom_offset,
-            child_frame_pos=[0, 0, self.segment_length / 2]
-        )
 
     def create_fixed_joint(self, parent_body_id: int, child_body_id: int, parent_frame_pos: np.ndarray,
                            child_frame_pos: np.ndarray) -> None:
@@ -110,22 +74,38 @@ class Tether:
         assert isinstance(parent_frame_pos, (list, np.ndarray)), "parent_frame_pos must be an instance of list or np.ndarray"
         assert isinstance(child_frame_pos, (list, np.ndarray)), "child_frame_pos must be an instance of list or np.ndarray"
 
+        # Ensure parent_frame_pos and child_frame_pos are numpy arrays
+        parent_frame_pos = np.array(parent_frame_pos, dtype=np.float32)
+        child_frame_pos = np.array(child_frame_pos, dtype=np.float32)
+
         p.createConstraint(parentBodyUniqueId=parent_body_id,
                            parentLinkIndex=-1,
                            childBodyUniqueId=child_body_id,
                            childLinkIndex=-1,
                            jointType=p.JOINT_FIXED,
                            jointAxis=[0, 0, 0],
-                           parentFramePosition=parent_frame_pos,
-                           childFramePosition=child_frame_pos,
+                           parentFramePosition=parent_frame_pos.tolist(),
+                           childFramePosition=child_frame_pos.tolist(),
                            parentFrameOrientation=[0, 0, 0, 1],
                            childFrameOrientation=[0, 0, 0, 1])
 
+    def attach_to_drone(self, drone_id: Any, drone_bottom_offset: np.ndarray) -> None:
+        assert isinstance(drone_bottom_offset, np.ndarray), "drone_bottom_offset must be an instance of np.ndarray"
+
+        drone_id = int(drone_id)
+
+        self.create_fixed_joint(
+            parent_body_id=drone_id,
+            child_body_id=self.segments[0],
+            parent_frame_pos=drone_bottom_offset,
+            child_frame_pos=[0, 0, self.segment_length / 2]
+        )
+
     def attach_weight(self, weight: Any) -> None:
         weight_attachment_point = weight.get_body_centre_top()
-        self.create_fixed_joint(parent_body_id=self.segments[-1],  # Bottom segment
+        self.create_fixed_joint(parent_body_id=self.segments[-1],
                                 child_body_id=weight.weight_id,
-                                parent_frame_pos=[0, 0, -self.segment_length / 2],  # Bottom tip of the last segment
+                                parent_frame_pos=[0, 0, -self.segment_length / 2],
                                 child_frame_pos=weight_attachment_point)
 
     def compute_total_rotation(self):
