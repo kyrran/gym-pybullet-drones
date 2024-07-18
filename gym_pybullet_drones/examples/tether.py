@@ -4,7 +4,7 @@ import numpy as np
 
 
 class Tether:
-    RADIUS = 0.001
+    RADIUS = 0.002
     MASS = 0.000001
 
     def __init__(self, length: float, top_position: np.ndarray, physics_client: int, num_segments: int = 20) -> None:
@@ -149,23 +149,18 @@ class Tether:
     def get_world_centre_bottom(self) -> np.ndarray:
         return self.top_position - self._object_len
 
-    def get_body_centre_top(self) -> np.ndarray:
-        return self._body_centre_top
-
-    def get_body_centre_bottom(self) -> np.ndarray:
-        return self._body_centre_bottom
-
     def attach_to_drone(self, drone_id: Any, drone_bottom_offset: np.ndarray) -> None:
-        # Convert drone_id to int and ensure drone_bottom_offset is a numpy array
-        drone_id = int(drone_id)
-        drone_bottom_offset = np.array(drone_bottom_offset, dtype=np.float32)
+        assert isinstance(drone_bottom_offset, np.ndarray), "drone_bottom_offset must be an instance of np.ndarray"
 
-        # Attach the tether to the drone with a fixed joint
+        # Convert drone_id to int if it's not already
+        drone_id = int(drone_id)
+
+        # Use the create_fixed_joint function to attach the top segment to the drone
         self.create_fixed_joint(
             parent_body_id=drone_id,
-            child_body_id=self.segments[0],  # Top segment of the tether
+            child_body_id=self.segments[0],
             parent_frame_pos=drone_bottom_offset,
-            child_frame_pos=np.array([0, 0, self.segment_length / 2], dtype=np.float32)
+            child_frame_pos=[0, 0, self.segment_length / 2]
         )
 
 

@@ -107,23 +107,36 @@ def run(
         ctrl = [DSLPIDControl(drone_model=drone) for _ in range(num_drones)]
         
         
-    #### Add a tree branch to the environment ##################
-    branch = Branch()  # Create an instance of the Environment class
-    branch_position = [0, 0, 2.7]  # Example position for the branch
-    branch.add_tree_branch(position=branch_position)
+    # #### Add a tree branch to the environment ##################
+    # branch = Branch()  # Create an instance of the Environment class
+    # branch_position = [0, 0, 2.7]  # Example position for the branch
+    # branch.add_tree_branch(position=branch_position)
     
     
-    #### Create and attach the tether with payload #############
+    # #### Create and attach the tether with payload #############
     tether_length = 1.0
+    # tether = Tether(length=tether_length, top_position=INIT_XYZS[0], physics_client=PYB_CLIENT, num_segments=20)
+    # drone_bottom_offset = np.array([0, 0, -0.01])
+    # tether.attach_to_drone(env.DRONE_IDS[0], drone_bottom_offset)
+
+
+    # #### Create and attach the weight (payload) ################
+    # payload_start_position = INIT_XYZS[0] - np.array([0, 0, tether_length])
+    # weight = Weight(payload_start_position)
+    # tether.attach_weight(weight)
+    
+    
     tether = Tether(length=tether_length, top_position=INIT_XYZS[0], physics_client=PYB_CLIENT, num_segments=20)
     drone_bottom_offset = np.array([0, 0, -0.01])
     tether.attach_to_drone(env.DRONE_IDS[0], drone_bottom_offset)
-
-
-    #### Create and attach the weight (payload) ################
-    payload_start_position = INIT_XYZS[0] - np.array([0, 0, tether_length])
-    weight = Weight(payload_start_position)
+    
+    tether_bottom_position = tether.get_world_centre_bottom()
+    weight = Weight(top_position=tether_bottom_position)
     tether.attach_weight(weight)
+    
+    branch = Branch()
+    branch = branch.add_tree_branch([0, 0, 2.7])
+
     
     
 
