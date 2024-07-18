@@ -1,11 +1,11 @@
 import pybullet as p
 from typing import List, Any
 import numpy as np
-
+import random
 
 class Tether:
-    RADIUS = 0.002
-    MASS = 0.000001
+    RADIUS = 0.005
+    MASS = 0.0000001
 
     def __init__(self, length: float, top_position: np.ndarray, physics_client: int, num_segments: int = 20) -> None:
         assert isinstance(length, float), "length must be an instance of float"
@@ -23,8 +23,7 @@ class Tether:
 
         self._parent_frame_pos = np.array([0, 0, -0.5 * self.segment_length], dtype=np.float32)
         self._child_frame_pos = np.array([0, 0, 0.5 * self.segment_length], dtype=np.float32)
-        self._body_centre_top = np.array([0, 0, 0.5 * self.length], dtype=np.float32)
-        self._body_centre_bottom = np.array([0, 0, -0.5 * self.length], dtype=np.float32)
+    
         self._object_len = np.array([0, 0, self.length], dtype=np.float32)
 
         self.create_tether()
@@ -71,7 +70,7 @@ class Tether:
                                            baseOrientation=p.getQuaternionFromEuler([0, 0, 0]))
             self.segments.append(segment_id)
 
-            p.changeDynamics(segment_id, -1, lateralFriction=1.2, linearDamping=0.0, angularDamping=0.0)
+            p.changeDynamics(segment_id, -1, lateralFriction=.2, linearDamping=0.0, angularDamping=0.0)
 
             # Connect this segment to the previous one (if not the first)
             if i > 0:
@@ -208,4 +207,17 @@ class Tether:
         return midpoint
 
     def get_world_centre_bottom(self) -> np.ndarray:
-        return self.top_position - self._object_len
+    
+        # Check the condition and create the weight accordingly
+        if np.all(self.top_position - self._object_len) > 0:
+            weight_position = np.array(self.top_position - self._object_len)
+        else:
+            while True:
+                    r = random.uniform(0, self.segment_length)
+                    theta = random.uniform(0, 2 * np.pi)
+                    x = r * np.cos(theta)
+                    y = r * np.sin(theta)
+                    if x != 0 and y != 0:
+                        break
+            weight_position = np.array([x, y, 0]) 
+        return weight_position

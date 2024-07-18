@@ -4,8 +4,8 @@ import numpy as np
 
 
 class Weight:
-    MASS: float = 0.000002
-    RADIUS: float = 0.02
+    MASS: float = 0.000001
+    RADIUS: float = 0.03
     DRAG_COEF: float = 0.472
 
     _body_centre_top = np.array([0, 0, RADIUS], dtype=np.float32)
