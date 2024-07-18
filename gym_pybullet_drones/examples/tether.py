@@ -40,6 +40,10 @@ class Tether:
         self.drone_wraps = 0.0
         self.time = 0
 
+        # # Increase the number of solver iterations
+        # p.setPhysicsEngineParameter(self.physics_client, numSolverIterations=200)
+        # p.setPhysicsEngineParameter(self.physics_client, numSubSteps=4)
+
     def create_tether(self) -> None:
         # Create each segment
         for i in range(self.num_segments):
@@ -55,8 +59,8 @@ class Tether:
             ]
 
             # Collision and visual shapes
-            collisionShapeId = p.createCollisionShape(p.GEOM_CYLINDER, radius=self.RADIUS, height=self.segment_length)
-            visualShapeId = p.createVisualShape(p.GEOM_CYLINDER, radius=self.RADIUS,
+            collisionShapeId = p.createCollisionShape(p.GEOM_CAPSULE, radius=self.RADIUS, height=self.segment_length)
+            visualShapeId = p.createVisualShape(p.GEOM_CAPSULE, radius=self.RADIUS,
                                                 length=self.segment_length, rgbaColor=[0, 0, 1, 1])
 
             # Create the segment
@@ -67,7 +71,7 @@ class Tether:
                                            baseOrientation=p.getQuaternionFromEuler([0, 0, 0]))
             self.segments.append(segment_id)
 
-            p.changeDynamics(segment_id, -1, lateralFriction=1.2)
+            p.changeDynamics(segment_id, -1, lateralFriction=1.2, linearDamping=0.0, angularDamping=0.0)
 
             # Connect this segment to the previous one (if not the first)
             if i > 0:
@@ -78,6 +82,64 @@ class Tether:
                     child_frame_pos=self._child_frame_pos
                 )
 
+    def attach_to_drone(self, drone_id: Any, drone_bottom_offset: np.ndarray) -> None:
+        assert isinstance(drone_bottom_offset, np.ndarray), "drone_bottom_offset must be an instance of np.ndarray"
+
+        # Convert drone_id to int if it's not already
+        drone_id = int(drone_id)
+
+        # Use the create_fixed_joint function to attach the top segment to the drone
+        self.create_fixed_joint(
+            parent_body_id=drone_id,
+            child_body_id=self.segments[0],
+            parent_frame_pos=drone_bottom_offset,
+            child_frame_pos=[0, 0, self.segment_length / 2]
+        )
+
+    def attach_weight(self, weight: Any) -> None:
+        # Attach the weight to the bottom segment
+        tether_attachment_point = self._parent_frame_pos
+        weight_attachment_point = weight.get_body_centre_top()
+        self.create_fixed_joint(parent_body_id=self.segments[-1],  # Bottom segment
+                                child_body_id=weight.weight_id,
+                                parent_frame_pos=tether_attachment_point,
+                                child_frame_pos=weight_attachment_point)
+
+    def create_rotational_joint(self, parent_body_id: int, child_body_id: int, parent_frame_pos: np.ndarray,
+                                child_frame_pos: np.ndarray) -> None:
+        assert isinstance(parent_body_id, int), "parent_body_id must be an instance of int"
+        assert isinstance(child_body_id, int), "child_body_id must be an instance of int"
+        assert isinstance(parent_frame_pos, np.ndarray), "parent_frame_pos must be an instance of np.ndarray"
+        assert isinstance(child_frame_pos, np.ndarray), "child_frame_pos must be an instance of np.ndarray"
+
+        # Use a point-to-point joint to connect the segments
+        p.createConstraint(parentBodyUniqueId=parent_body_id,
+                           parentLinkIndex=-1,
+                           childBodyUniqueId=child_body_id,
+                           childLinkIndex=-1,
+                           jointType=p.JOINT_POINT2POINT,
+                           jointAxis=[0, 0, 0],
+                           parentFramePosition=parent_frame_pos.tolist(),
+                           childFramePosition=child_frame_pos.tolist())
+
+    def create_fixed_joint(self, parent_body_id: int, child_body_id: int, parent_frame_pos: Any,
+                           child_frame_pos: Any) -> None:
+        assert isinstance(parent_body_id, int), "parent_body_id must be an instance of int"
+        assert isinstance(child_body_id, int), "child_body_id must be an instance of int"
+        assert isinstance(parent_frame_pos, (List, np.ndarray)), "wrong type"
+        assert isinstance(child_frame_pos, (List, np.ndarray)), "wrong type"
+
+        p.createConstraint(parentBodyUniqueId=parent_body_id,
+                           parentLinkIndex=-1,
+                           childBodyUniqueId=child_body_id,
+                           childLinkIndex=-1,
+                           jointType=p.JOINT_FIXED,
+                           jointAxis=[0, 0, 0],
+                           parentFramePosition=parent_frame_pos.tolist() if isinstance(parent_frame_pos, np.ndarray) else parent_frame_pos,
+                           childFramePosition=child_frame_pos.tolist() if isinstance(child_frame_pos, np.ndarray) else child_frame_pos,
+                           parentFrameOrientation=[0, 0, 0, 1],
+                           childFrameOrientation=[0, 0, 0, 1])
+
     def compute_total_rotation(self):
         # ANGLE FOR WEIGHT
         (weight_x, _, weight_y), _ = p.getBasePositionAndOrientation(self.segments[-1])
@@ -85,7 +147,7 @@ class Tether:
         weight_delta_y = 2.7 - weight_y
 
         # Compute the angle using arctan2, which considers quadrant location
-        weight_angle_radians = np.arctan2(weight_delta_x, weight_delta_y)  # swapped x and y to align with the vertical
+        weight_angle_radians = np.arctan2(weight_delta_x, weight_delta_y)
         weight_angle_degrees = np.degrees(weight_angle_radians)
 
         if self.weight_prev_angle is not None:
@@ -106,13 +168,12 @@ class Tether:
         self.weight_prev_angle = weight_angle_degrees
 
         # ANGLE FOR DRONE
-
         (drone_x, _, drone_y), _ = p.getBasePositionAndOrientation(self.segments[0])
         drone_delta_x = drone_x - 0
         drone_delta_y = 2.7 - drone_y
 
         # Compute the angle using arctan2, which considers quadrant location
-        drone_angle_radians = np.arctan2(drone_delta_x, drone_delta_y)  # swapped x and y to align with the vertical
+        drone_angle_radians = np.arctan2(drone_delta_x, drone_delta_y)
         drone_angle_degrees = np.degrees(drone_angle_radians)
 
         if self.drone_prev_angle is not None:
@@ -148,73 +209,3 @@ class Tether:
 
     def get_world_centre_bottom(self) -> np.ndarray:
         return self.top_position - self._object_len
-
-    def attach_to_drone(self, drone_id: Any, drone_bottom_offset: np.ndarray) -> None:
-        assert isinstance(drone_bottom_offset, np.ndarray), "drone_bottom_offset must be an instance of np.ndarray"
-
-        # Convert drone_id to int if it's not already
-        drone_id = int(drone_id)
-
-        # Use the create_fixed_joint function to attach the top segment to the drone
-        self.create_fixed_joint(
-            parent_body_id=drone_id,
-            child_body_id=self.segments[0],
-            parent_frame_pos=drone_bottom_offset,
-            child_frame_pos=[0, 0, self.segment_length / 2]
-        )
-
-
-
-    def attach_weight(self, weight: Any) -> None:
-
-        # Attach the weight to the bottom segment
-        tether_attachment_point = self._parent_frame_pos
-        weight_attachment_point = weight.get_body_centre_top()
-        self.create_fixed_joint(parent_body_id=self.segments[-1],  # Bottom segment
-                                child_body_id=weight.weight_id,
-                                parent_frame_pos=tether_attachment_point,
-                                child_frame_pos=weight_attachment_point)
-
-    def create_rotational_joint(self, parent_body_id: int, child_body_id: int, parent_frame_pos: np.ndarray,
-                                child_frame_pos: np.ndarray) -> None:
-        assert isinstance(parent_body_id, int), "parent_body_id must be an instance of int"
-        assert isinstance(child_body_id, int), "child_body_id must be an instance of int"
-        assert isinstance(parent_frame_pos, np.ndarray), "parent_frame_pos must be an instance of np.ndarray"
-        assert isinstance(child_frame_pos, np.ndarray), "child_frame_pos must be an instance of np.ndarray"
-
-        # Use a fixed point between the drone and the tether
-        # TODO: Use a more realistic version of the joints
-        p.createConstraint(parentBodyUniqueId=parent_body_id,
-                           parentLinkIndex=-1,
-                           childBodyUniqueId=child_body_id,
-                           childLinkIndex=-1,
-                           jointType=p.JOINT_POINT2POINT,
-                           jointAxis=[0, 0, 0],
-                           parentFramePosition=parent_frame_pos,
-                           childFramePosition=child_frame_pos,
-                           parentFrameOrientation=[0, 0, 0, 1],
-                           childFrameOrientation=[0, 0, 0, 1])
-
-    def create_fixed_joint(self, parent_body_id: int, child_body_id: int, parent_frame_pos: List[float],
-                           child_frame_pos: List[float]) -> None:
-        assert isinstance(parent_body_id, int), "parent_body_id must be an instance of int"
-        assert isinstance(child_body_id, int), "child_body_id must be an instance of int"
-        assert isinstance(parent_frame_pos, (List, np.ndarray)), "wrong type"
-        assert isinstance(child_frame_pos, (List, np.ndarray)), "child_frame_pos must be an instance of np.ndarray"
-
-        # Use a fixed point between the drone and the tether
-        # TODO: Use a more realistic version of the joints
-        p.createConstraint(parentBodyUniqueId=parent_body_id,
-                           parentLinkIndex=-1,
-                           childBodyUniqueId=child_body_id,
-                           childLinkIndex=-1,
-                           jointType=p.JOINT_FIXED,
-                           jointAxis=[0, 0, 0],
-                           parentFramePosition=parent_frame_pos,
-                           childFramePosition=child_frame_pos,
-                           parentFrameOrientation=[0, 0, 0, 1],
-                           childFrameOrientation=[0, 0, 0, 1])
-
-    # def cancel_gravity(self) -> None:
-    #     for seg in self.segments:
-    #         p.applyExternalForce(seg, -1, [0, 0, 10], [0, 0, 0], p.WORLD_FRAME)

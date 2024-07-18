@@ -40,7 +40,7 @@ def process_trajectory(file_path, processed_file_path, initial_hover_point):
     jnt_traj = instance.compute_trajectory(0, 0)
 
     # Sample the trajectory
-    N_samples = 200
+    N_samples = 1000
     ss = np.linspace(0, jnt_traj.duration, N_samples)
     qs = jnt_traj(ss)
 
