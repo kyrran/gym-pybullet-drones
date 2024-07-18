@@ -215,6 +215,6 @@ class Tether:
                            parentFrameOrientation=[0, 0, 0, 1],
                            childFrameOrientation=[0, 0, 0, 1])
 
-    def cancel_gravity(self) -> None:
-        for seg in self.segments:
-            p.applyExternalForce(seg, -1, [0, 0, 10], [0, 0, 0], p.WORLD_FRAME)
+    # def cancel_gravity(self) -> None:
+    #     for seg in self.segments:
+    #         p.applyExternalForce(seg, -1, [0, 0, 10], [0, 0, 0], p.WORLD_FRAME)

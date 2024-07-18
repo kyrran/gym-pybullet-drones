@@ -127,7 +127,7 @@ def run(
     
     
     tether = Tether(length=tether_length, top_position=INIT_XYZS[0], physics_client=PYB_CLIENT, num_segments=20)
-    drone_bottom_offset = np.array([0, 0, -0.01])
+    drone_bottom_offset = np.array([0, 0, -0.001])
     tether.attach_to_drone(env.DRONE_IDS[0], drone_bottom_offset)
     
     tether_bottom_position = tether.get_world_centre_bottom()
