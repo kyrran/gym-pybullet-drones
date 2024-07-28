@@ -4,9 +4,15 @@ import numpy as np
 
 
 class Weight:
-    MASS: float = 0.000001
-    RADIUS: float = 0.03
-    DRAG_COEF: float = 0.472
+    
+    # MASS: float = 0.5
+    # RADIUS: float = 0.05
+    # DRAG_COEF: float = 0.472
+    
+    
+    
+    MASS: float = 0.00005
+    RADIUS: float = 0.05
 
     _body_centre_top = np.array([0, 0, RADIUS], dtype=np.float32)
 
@@ -14,13 +20,17 @@ class Weight:
         assert isinstance(top_position, np.ndarray), "top_position must be an instance of np.ndarray"
 
         top_x, top_y, top_z = top_position
-        self.base_position = [top_x, top_y, top_z - self.RADIUS]
+        if top_z <= 0:
+            self.base_position = [top_x - self.RADIUS, top_y, top_z + self.RADIUS]
+        else:
+            self.base_position = [top_x, top_y, top_z - self.RADIUS]
+            
         self.create_weight()
         self.cross_area = 3 * self.RADIUS * self.RADIUS
 
     def create_weight(self) -> None:
         collisionShapeId = p.createCollisionShape(p.GEOM_SPHERE, radius=self.RADIUS)
-        visualShapeId = p.createVisualShape(p.GEOM_SPHERE, radius=self.RADIUS, rgbaColor=[1, 0, 0, 1])
+        visualShapeId = p.createVisualShape(p.GEOM_SPHERE, radius=self.RADIUS, rgbaColor=[0, 0, 1, 1])
 
         self.weight_id = p.createMultiBody(baseMass=self.MASS,
                                            baseCollisionShapeIndex=collisionShapeId,

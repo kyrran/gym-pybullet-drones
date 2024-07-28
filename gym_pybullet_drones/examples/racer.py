@@ -17,8 +17,9 @@ from weight import Weight
 from branch import Branch
 
 import random
+from gym_pybullet_drones.control.CTBRControl import CTBRControl
 
-DEFAULT_DRONES = DroneModel("cf2x")
+DEFAULT_DRONES = DroneModel("racer")
 DEFAULT_NUM_DRONES = 1
 DEFAULT_PHYSICS = Physics("pyb")
 DEFAULT_GUI = True
@@ -110,6 +111,8 @@ def run(
     if drone in [DroneModel.CF2X, DroneModel.CF2P]:
         ctrl = [DSLPIDControl(drone_model=drone) for _ in range(num_drones)]
         
+    if drone in [DroneModel.RACE]:
+        ctrl = [DSLPIDControl(drone_model=drone) for _ in range(num_drones)]
         
     #### Add a tree branch to the environment ##################
     branch = Branch()
@@ -144,19 +147,7 @@ def run(
 
         #### Compute control for the current way point #############
         for j in range(num_drones):
-            # wp_index = min(wp_counters[j], len(TARGET_POS) - 1)  # Ensure wp_index doesn't exceed target positions
-            
-            wp_index = min(wp_counters[j], len(TARGET_POS) - 1)
-            target_pos = TARGET_POS[wp_index, :]
-
-            # if tether.is_taut():
-            #     print(tether.is_taut())
-            #     weight_pos = tether.get_weight_position()
-            #     direction = np.array(target_pos) - np.array(weight_pos)
-            #     direction = direction / np.linalg.norm(direction) * tether.length
-            #     target_pos = weight_pos + direction
-                
-                
+            wp_index = min(wp_counters[j], len(TARGET_POS) - 1)  # Ensure wp_index doesn't exceed target positions
             action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
                                                                  state=obs[j],
                                                                  target_pos=TARGET_POS[wp_index, :],
