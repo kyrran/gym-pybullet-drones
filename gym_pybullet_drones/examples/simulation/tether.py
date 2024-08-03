@@ -45,24 +45,25 @@ class Tether:
     
 
     def create_tether(self) -> None:
+        
         # Create each segment
         for i in range(self.num_segments):
             if self.top_position[2] - i * self.segment_length <= 0:
-                #self.top_position[0] = - 0.01
+                
                 segment_top_position = [
-                    -(self.top_position[0] - (i-self.num_segments) * self.segment_length),
+                    self.top_position[0] - i * self.segment_length - 0.01,
                     self.top_position[1],
                     0
                 ]
                 # print(self.top_position[0])
-                print(f"{i},{segment_top_position[0]}")
+                print(f"{i},{segment_top_position}")
                 
                 segment_base_position = [
                     segment_top_position[0] - 0.5 * self.segment_length,
                     segment_top_position[1],
                     0
                 ]
-                print(f"{i}2:{segment_base_position[0]}")
+                print(f"{i}2:{segment_base_position}")
             else:
                 segment_top_position = [
                     self.top_position[0],
@@ -75,7 +76,23 @@ class Tether:
                     segment_top_position[1],
                     segment_top_position[2] - 0.5 * self.segment_length
                 ]
-
+        
+        
+        # for i in range(self.num_segments):
+        #     segment_top_position = [
+        #         self.top_position[0],
+        #         self.top_position[1],
+        #         max(self.top_position[2] - i * self.segment_length, 0)  # Ensure the segment stays above ground
+        #     ]
+        #     print(f"{i},{segment_top_position[0]}")
+                
+        #     segment_base_position = [
+        #         segment_top_position[0],
+        #         segment_top_position[1],
+        #         max(segment_top_position[2] - 0.5 * self.segment_length, 0)  # Ensure the segment stays above ground
+        #     ]
+        #     print(f"{i}2:{segment_base_position[0]}")
+                
             # Collision and visual shapes
             collisionShapeId = p.createCollisionShape(p.GEOM_CYLINDER, radius=self.RADIUS, height=self.segment_length)
             visualShapeId = p.createVisualShape(p.GEOM_CYLINDER, radius=self.RADIUS,
@@ -102,7 +119,9 @@ class Tether:
                     parent_frame_pos=self._parent_frame_pos,
                     child_frame_pos=self._child_frame_pos
                 )
-                
+            
+            
+
             # if i > 0:
             #     self.create_fixed_joint(
             #         parent_body_id=self.segments[i - 1],
@@ -110,7 +129,7 @@ class Tether:
             #         parent_frame_pos=[0, 0, -0.5 * self.segment_length],
             #         child_frame_pos=[0, 0, 0.5 * self.segment_length]
             #     )
-        self.top_position[0] = segment_top_position[0]
+        
 
     def attach_to_drone(self, drone_id: Any) -> None:
         # Convert drone_id to int if it's not already
@@ -120,9 +139,16 @@ class Tether:
         self.create_fixed_joint(
             parent_body_id=drone_id,
             child_body_id=self.segments[0],
-            parent_frame_pos=self.drone_bottom_offset,
+            parent_frame_pos= self.drone_bottom_offset,
             child_frame_pos=[0, 0, self.segment_length / 2]
         )
+        
+        # self.create_rotational_joint(
+        #             parent_body_id=drone_id,
+        #             child_body_id=self.segments[0],
+        #             parent_frame_pos=self.drone_bottom_offset,
+        #             child_frame_pos=np.array([0, 0, self.segment_length / 2])
+        #         )
 
     def attach_weight(self, weight: Any) -> None:
         # Attach the weight to the bottom segment
@@ -147,7 +173,7 @@ class Tether:
                            childBodyUniqueId=child_body_id,
                            childLinkIndex=-1,
                            jointType=p.JOINT_POINT2POINT,
-                           jointAxis=[0,0, 1],
+                           jointAxis=[0,0,1],
                            parentFramePosition=parent_frame_pos.tolist(),
                            childFramePosition=child_frame_pos.tolist())
 
@@ -238,7 +264,22 @@ class Tether:
 
     def get_world_centre_bottom(self) -> np.ndarray:
         
-        """
+        bottom_position, _ = p.getBasePositionAndOrientation(self.segments[-1])
+        if bottom_position[2] == 0.0:
+            bottom_position = np.array([-self.segment_length/2.0, 0.0, 0.0],dtype=np.float32) + bottom_position
+        elif bottom_position[2] > 0.0:
+            bottom_position[2] = bottom_position[2] - self.segment_length * 0.5
+        if bottom_position[2] < 0.0:
+            raise ValueError("The bottom position of the tether should not be negative in the z-axis.")
+        print(bottom_position)
+        return np.array(bottom_position)
+        
+        """if bottom_position[2] == 0.0:
+            bottom_position = np.array([-self.segment_length/2.0, 0.0, 0.0],dtype=np.float32) + bottom_position
+        elif bottom_position[2] > 0.0:
+            bottom_position[2] = bottom_position[2] - self.segment_length * 0.5
+        if bottom_position[2] < 0.0:
+        
         Calculate the world position of the bottom of the tether.
 
         Returns:

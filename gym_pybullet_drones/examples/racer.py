@@ -12,9 +12,9 @@ from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from process_trajectory import load_waypoints, process_trajectory
-from tether import Tether
-from weight import Weight
-from branch import Branch
+from simulation.tether import Tether
+from simulation.weight import Weight
+from simulation.branch import Branch
 
 import random
 from gym_pybullet_drones.control.CTBRControl import CTBRControl

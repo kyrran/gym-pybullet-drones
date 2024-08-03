@@ -12,9 +12,9 @@ from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from process_trajectory import load_waypoints, process_trajectory
-from tether import Tether
-from weight import Weight
-from branch import Branch
+from simulation.tether import Tether
+from simulation.weight import Weight
+from simulation.branch import Branch
 
 import random
 
@@ -31,7 +31,7 @@ DEFAULT_CONTROL_FREQ_HZ = 48
 DEFAULT_DURATION_SEC = 30
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
-DEFAULT_HOVER_HEIGHT = 1.1  # Default hover height set to 1 meter
+DEFAULT_HOVER_HEIGHT = 1.2  # Default hover height set to 1 meter
 DEFAULT_PROCESSED_TRAJECTORY_FILE = 'processed_trajectory_1.csv'  # Default trajectory file
 DEFAULT_TRAJECTORY_FILE = 'trajectory_1.csv'
 DEFAULT_TETHER_LENGTH = 1.0
@@ -122,53 +122,45 @@ def run(
     tether = Tether(env.DRONE_IDS[0],length=tether_length, physics_client=PYB_CLIENT)
     tether.attach_to_drone(env.DRONE_IDS[0])
 
-
-    #### Create and attach the weight (payload) ################
-    # payload_start_position = tether.get_world_centre_bottom()
-    # weight = Weight(INIT_XYZS[0] - tether_length)
-    # tether.attach_weight(weight)
-    
-    
     payload_start_position_top = tether.get_world_centre_bottom()
     print(payload_start_position_top)
     weight = Weight(payload_start_position_top)
     tether.attach_weight(weight)
-    print(weight.get_position())
+   
     #### Run the simulation ####################################
     action = np.zeros((num_drones, 4))
     START = time.time()
     for i in range(0, int(duration_sec * env.CTRL_FREQ)):
-
+    #while np.all(wp_counters < len(TARGET_POS)):
         #### Step the simulation ###################################
         obs, reward, terminated, truncated, info = env.step(action)
 
         #### Compute control for the current way point #############
-        for j in range(num_drones):
-            # wp_index = min(wp_counters[j], len(TARGET_POS) - 1)  # Ensure wp_index doesn't exceed target positions
-            
-            wp_index = min(wp_counters[j], len(TARGET_POS) - 1)
-            target_pos = TARGET_POS[wp_index, :]
-
-            # if tether.is_taut():
-            #     print(tether.is_taut())
-            #     weight_pos = tether.get_weight_position()
-            #     direction = np.array(target_pos) - np.array(weight_pos)
-            #     direction = direction / np.linalg.norm(direction) * tether.length
-            #     target_pos = weight_pos + direction
-                
-                
-            action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
-                                                                 state=obs[j],
-                                                                 target_pos=TARGET_POS[wp_index, :],
-                                                                 target_rpy=INIT_RPYS[j, :]
-                                                                 )
-
-        #### Go to the next way point ##############################
-        wp_counters += 1
         
+        # print(wp_counters)
+        # print(len(TARGET_POS))
+        if np.all(wp_counters <= len(TARGET_POS)):
+            for j in range(num_drones):
+                wp_index = min(wp_counters[j], len(TARGET_POS) - 1)  # Ensure wp_index doesn't exceed target positions
+                
+                action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
+                                                                    state=obs[j],
+                                                                    target_pos=TARGET_POS[wp_index, :],
+                                                                    target_rpy=INIT_RPYS[j, :]
+                                                                    )
+            #### Go to the next way point ##############################
+            wp_counters += 1
+        else:
+            print("Last waypoint reached, powering off the drone.")
+            for k in range(p.getNumJoints(env.DRONE_IDS[0])):
+                # Set the motor to torque control with zero torque to disable it
+                p.setJointMotorControl2(env.DRONE_IDS[0], k, p.TORQUE_CONTROL, force=20)
+                # p.setJointMotorControl2(env.DRONE_IDS[0], i, p.VELOCITY_CONTROL, targetVelocity=0)
+            
         #### Get payload position ##################################
         payload_position = weight.get_position()
-        #print(payload_position)
+
+
         #### Log the simulation ####################################
         for j in range(num_drones):
             logger.log(drone=j,
@@ -177,7 +169,7 @@ def run(
                        control=np.hstack([TARGET_POS[wp_index, :], INIT_RPYS[j, :], np.zeros(6)]),
                        payload_position=payload_position  # Log the payload position
                     )
-
+  
         #### Printout ##############################################
         env.render()
 
