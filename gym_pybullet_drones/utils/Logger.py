@@ -26,6 +26,10 @@ class Logger(object):
         self.states = np.zeros((num_drones, 16, duration_sec * self.LOGGING_FREQ_HZ))
         self.controls = np.zeros((num_drones, 12, duration_sec * self.LOGGING_FREQ_HZ))
         self.payload_positions = np.zeros((3, duration_sec * self.LOGGING_FREQ_HZ))
+        self.position_info = []  # Added to store timestamp and position information
+        self.payload_position_info = []  # Added to store timestamp and payload position information
+
+
 
     def log(self,
             drone: int,
@@ -49,6 +53,10 @@ class Logger(object):
         self.controls[drone, :, current_counter] = control
         if payload_position is not None:
             self.payload_positions[:, current_counter] = payload_position
+        
+            self.payload_position_info.append((timestamp, *payload_position))  # Store timestamp and payload position
+        self.position_info.append((timestamp, state[0], state[1], state[2]))  # Store timestamp and position
+
         self.counters[drone] = current_counter + 1
 
     def save(self):
@@ -75,6 +83,12 @@ class Logger(object):
                 np.savetxt(out_file, np.transpose(np.vstack([t, self.payload_positions[1, :]])), delimiter=",")
             with open(csv_dir + "/payload_z.csv", 'wb') as out_file:
                 np.savetxt(out_file, np.transpose(np.vstack([t, self.payload_positions[2, :]])), delimiter=",")
+            
+            
+        with open(csv_dir + "/position_info.csv", 'wb') as out_file:  # Save position_info to CSV
+            np.savetxt(out_file, self.position_info, delimiter=",")
+        with open(csv_dir + "/payload_position_info.csv", 'wb') as out_file:  # Save payload_position_info to CSV
+            np.savetxt(out_file, self.payload_position_info, delimiter=",")
 
     def plot(self, pwm=False):
         plt.rc('axes', prop_cycle=(cycler('color', ['r', 'g', 'b', 'y']) + cycler('linestyle', ['-', '--', ':', '-.'])))
@@ -83,25 +97,25 @@ class Logger(object):
 
         col = 0
 
-        row = 0
-        for j in range(self.NUM_DRONES):
-            axs[row, col].plot(t, self.states[j, 0, :], label="drone_" + str(j))
-        axs[row, col].set_xlabel('time')
-        axs[row, col].set_ylabel('x (m)')
+        # row = 0
+        # for j in range(self.NUM_DRONES):
+        #     axs[row, col].plot(t, self.states[j, 0, :], label="drone_" + str(j))
+        # axs[row, col].set_xlabel('time')
+        # axs[row, col].set_ylabel('x (m)')
 
-        row = 1
-        for j in range(self.NUM_DRONES):
-            axs[row, col].plot(t, self.states[j, 1, :], label="drone_" + str(j))
-        axs[row, col].set_xlabel('time')
-        axs[row, col].set_ylabel('y (m)')
+        # row = 1
+        # for j in range(self.NUM_DRONES):
+        #     axs[row, col].plot(t, self.states[j, 1, :], label="drone_" + str(j))
+        # axs[row, col].set_xlabel('time')
+        # axs[row, col].set_ylabel('y (m)')
 
-        row = 2
-        for j in range(self.NUM_DRONES):
-            axs[row, col].plot(t, self.states[j, 2, :], label="drone_" + str(j))
-        axs[row, col].set_xlabel('time')
-        axs[row, col].set_ylabel('z (m)')
+        # row = 2
+        # for j in range(self.NUM_DRONES):
+        #     axs[row, col].plot(t, self.states[j, 2, :], label="drone_" + str(j))
+        # axs[row, col].set_xlabel('time')
+        # axs[row, col].set_ylabel('z (m)')
 
-        row = 3  # Starting row for the combined XYZ plot
+        row = 0  # Starting row for the combined XYZ plot
         for j in range(self.NUM_DRONES):
             axs[row, col].plot(t, self.states[j, 0, :], label="x_drone_" + str(j))
             axs[row, col].plot(t, self.states[j, 1, :], label="y_drone_" + str(j))
@@ -110,22 +124,22 @@ class Logger(object):
         axs[row, col].set_ylabel('position (m)')
         axs[row, col].legend(loc='upper right')
 
-        row = 4
+        row = 1
         axs[row, col].plot(t, self.payload_positions[0, :], label="payload_x")
         axs[row, col].set_xlabel('time')
         axs[row, col].set_ylabel('x (m)')
 
-        row = 5
+        row = 2
         axs[row, col].plot(t, self.payload_positions[1, :], label="payload_y")
         axs[row, col].set_xlabel('time')
         axs[row, col].set_ylabel('y (m)')
 
-        row = 6
+        row = 3
         axs[row, col].plot(t, self.payload_positions[2, :], label="payload_z")
         axs[row, col].set_xlabel('time')
         axs[row, col].set_ylabel('z (m)')
 
-        row = 7  # Combined XYZ plot for payload
+        row = 4  # Combined XYZ plot for payload
         axs[row, col].plot(t, self.payload_positions[0, :], label="x_payload")
         axs[row, col].plot(t, self.payload_positions[1, :], label="y_payload")
         axs[row, col].plot(t, self.payload_positions[2, :], label="z_payload")

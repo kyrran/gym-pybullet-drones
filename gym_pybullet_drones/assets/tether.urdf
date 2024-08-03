@@ -1,0 +1,608 @@
+<?xml version="1.0" ?>
+<robot name="tether">
+
+  <!-- Tether segments -->
+  <link name="segment_0">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Define links and joints for remaining segments -->
+  <link name="segment_1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_2">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Add more segments as needed -->
+
+  <link name="segment_3">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_4">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_5">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_6">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_7">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_8">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_9">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_10">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_11">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_12">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_13">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_14">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_15">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_16">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_17">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_18">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="segment_19">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.00000025"/>
+      <inertia ixx="0.000000001" ixy="0.0" ixz="0.0" iyy="0.000000001" iyz="0.0" izz="0.000000001"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.005" length="0.05"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- Rotational joint between segments -->
+  <joint name="joint_0_1" type="continuous">
+    <parent link="segment_0"/>
+    <child link="segment_1"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_1_2" type="continuous">
+    <parent link="segment_1"/>
+    <child link="segment_2"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_2_3" type="continuous">
+    <parent link="segment_2"/>
+    <child link="segment_3"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_3_4" type="continuous">
+    <parent link="segment_3"/>
+    <child link="segment_4"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_4_5" type="continuous">
+    <parent link="segment_4"/>
+    <child link="segment_5"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_5_6" type="continuous">
+    <parent link="segment_5"/>
+    <child link="segment_6"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_6_7" type="continuous">
+    <parent link="segment_6"/>
+    <child link="segment_7"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_7_8" type="continuous">
+    <parent link="segment_7"/>
+    <child link="segment_8"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_8_9" type="continuous">
+    <parent link="segment_8"/>
+    <child link="segment_9"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_9_10" type="continuous">
+    <parent link="segment_9"/>
+    <child link="segment_10"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_10_11" type="continuous">
+    <parent link="segment_10"/>
+    <child link="segment_11"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_11_12" type="continuous">
+    <parent link="segment_11"/>
+    <child link="segment_12"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_12_13" type="continuous">
+    <parent link="segment_12"/>
+    <child link="segment_13"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_13_14" type="continuous">
+    <parent link="segment_13"/>
+    <child link="segment_14"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_14_15" type="continuous">
+    <parent link="segment_14"/>
+    <child link="segment_15"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_15_16" type="continuous">
+    <parent link="segment_15"/>
+    <child link="segment_16"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_16_17" type="continuous">
+    <parent link="segment_16"/>
+    <child link="segment_17"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_17_18" type="continuous">
+    <parent link="segment_17"/>
+    <child link="segment_18"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="joint_18_19" type="continuous">
+    <parent link="segment_18"/>
+    <child link="segment_19"/>
+    <origin xyz="0 0 -0.025" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Fixed joint to connect the first tether segment to the drone base link -->
+  <joint name="tether_base_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="segment_0"/>
+    <origin xyz="0 0 -0.01" rpy="0 0 0"/>
+  </joint>
+</robot>

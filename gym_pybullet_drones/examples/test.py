@@ -15,6 +15,7 @@ from process_trajectory import load_waypoints, process_trajectory
 from simulation.tether import Tether
 from simulation.weight import Weight
 from simulation.branch import Branch
+from simulation.room import Room
 
 import random
 
@@ -69,6 +70,7 @@ def run(
     NUM_WP = control_freq_hz * PERIOD
     ASCENT_DURATION = int(NUM_WP / 4)  # Ascent duration is a quarter of the total period
     TARGET_POS = np.zeros((NUM_WP + len(trajectory_points), 3))
+    
 
     for i in range(NUM_WP):
         if i < ASCENT_DURATION:
@@ -110,7 +112,9 @@ def run(
     if drone in [DroneModel.CF2X, DroneModel.CF2P]:
         ctrl = [DSLPIDControl(drone_model=drone) for _ in range(num_drones)]
         
-        
+    room = Room()
+    room.create_room()
+    
     #### Add a tree branch to the environment ##################
     branch = Branch()
     branch_position = DEFAULT_BRANCH_POSITION 
@@ -139,24 +143,26 @@ def run(
         
         # print(wp_counters)
         # print(len(TARGET_POS))
-        if np.all(wp_counters <= len(TARGET_POS)):
-            for j in range(num_drones):
-                wp_index = min(wp_counters[j], len(TARGET_POS) - 1)  # Ensure wp_index doesn't exceed target positions
-                
-                action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
-                                                                    state=obs[j],
-                                                                    target_pos=TARGET_POS[wp_index, :],
-                                                                    target_rpy=INIT_RPYS[j, :]
-                                                                    )
-            #### Go to the next way point ##############################
-            wp_counters += 1
-        else:
-            print("Last waypoint reached, powering off the drone.")
-            for k in range(p.getNumJoints(env.DRONE_IDS[0])):
-                # Set the motor to torque control with zero torque to disable it
-                p.setJointMotorControl2(env.DRONE_IDS[0], k, p.TORQUE_CONTROL, force=20)
-                # p.setJointMotorControl2(env.DRONE_IDS[0], i, p.VELOCITY_CONTROL, targetVelocity=0)
+        #if np.all(wp_counters <= len(TARGET_POS)):
+        for j in range(num_drones):
+            wp_index = min(wp_counters[j], len(TARGET_POS) - 1)  # Ensure wp_index doesn't exceed target positions
             
+            action[j, :], _, _ = ctrl[j].computeControlFromState(control_timestep=env.CTRL_TIMESTEP,
+                                                                state=obs[j],
+                                                                target_pos=TARGET_POS[wp_index, :],
+                                                                target_rpy=INIT_RPYS[j, :]
+                                                                )
+        #### Go to the next way point ##############################
+        wp_counters += 1
+        #else:
+        
+        # print("Last waypoint reached, powering off the drone.")
+        # for k in range(p.getNumJoints(env.DRONE_IDS[0])):
+        #     # First, unlock/disable the default velocity/position motor
+        #     p.setJointMotorControl2(env.DRONE_IDS[0], k, p.VELOCITY_CONTROL, force=0)
+        #     # Then, set the motor to torque control with zero torque to disable it
+        #     p.setJointMotorControl2(env.DRONE_IDS[0], k, p.TORQUE_CONTROL, force=0)
+
         #### Get payload position ##################################
         payload_position = weight.get_position()
 

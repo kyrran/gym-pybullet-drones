@@ -31,9 +31,9 @@ class DSLPIDControl(BaseControl):
 
         """
         super().__init__(drone_model=drone_model, g=g)
-        if self.DRONE_MODEL != DroneModel.CF2X and self.DRONE_MODEL != DroneModel.CF2P:
-            print("[ERROR] in DSLPIDControl.__init__(), DSLPIDControl requires DroneModel.CF2X or DroneModel.CF2P")
-            exit()
+        # if self.DRONE_MODEL != DroneModel.CF2X and self.DRONE_MODEL != DroneModel.CF2P:
+        #     print("[ERROR] in DSLPIDControl.__init__(), DSLPIDControl requires DroneModel.CF2X or DroneModel.CF2P")
+        #     exit()
         self.P_COEFF_FOR = np.array([.4, .4, 1.25])
         self.I_COEFF_FOR = np.array([.05, .05, .05])
         self.D_COEFF_FOR = np.array([.2, .2, .5])
@@ -44,6 +44,8 @@ class DSLPIDControl(BaseControl):
         self.PWM2RPM_CONST = 4070.3
         self.MIN_PWM = 20000
         self.MAX_PWM = 65535
+        
+        
         if self.DRONE_MODEL == DroneModel.CF2X:
             self.MIXER_MATRIX = np.array([ 
                                     [-.5, -.5, -1],
@@ -58,6 +60,26 @@ class DSLPIDControl(BaseControl):
                                     [0,  1,  -1],
                                     [-1, 0, 1]
                                     ])
+        elif self.DRONE_MODEL == DroneModel.RACE:
+            self.P_COEFF_FOR = np.array([.4, .4, 1.25])
+            self.I_COEFF_FOR = np.array([.05, .05, .05])
+            self.D_COEFF_FOR = np.array([.6, .6, 1.5])
+            self.P_COEFF_TOR = np.array([70000., 70000., 60000.])
+            self.I_COEFF_TOR = np.array([.0, .0, 500.])
+            self.D_COEFF_TOR = np.array([2000., 2000., 1200.])
+            self.PWM2RPM_SCALE = 0.2685
+            self.PWM2RPM_CONST = 4070.3
+            self.MIN_PWM = 20000
+            self.MAX_PWM = 65535
+            
+            self.MIXER_MATRIX = np.array([
+                                    [0.29, -1, -.00],
+                                    [0.29,  1,  .00],
+                                    [-0.29,  1, -.00],
+                                    [-0.29, -1,  .00]
+                                ])
+
+
         self.reset()
 
     ################################################################################
@@ -90,6 +112,7 @@ class DSLPIDControl(BaseControl):
                        target_vel=np.zeros(3),
                        target_rpy_rates=np.zeros(3)
                        ):
+        
         """Computes the PID control action (as RPMs) for a single drone.
 
         This methods sequentially calls `_dslPIDPositionControl()` and `_dslPIDAttitudeControl()`.
@@ -143,6 +166,8 @@ class DSLPIDControl(BaseControl):
                                           )
         cur_rpy = p.getEulerFromQuaternion(cur_quat)
         return rpm, pos_e, computed_target_rpy[2] - cur_rpy[2]
+    
+
     
     ################################################################################
 
