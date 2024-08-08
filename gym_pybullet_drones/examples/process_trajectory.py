@@ -8,7 +8,17 @@ def load_waypoints(filename):
     """Load waypoints from a CSV file."""
     try:
         data = pd.read_csv(filename)
+        # data[['x', 'y', 'z']] -= [0,0,2.7]
+        # data[['x', 'y', 'z']] += [1.6,0,1.8]
+
         waypoints = data[['x', 'y', 'z']].values  # Extract x, y, z columns
+        # data['drone_x'] = data['drone_x'] / 1000.00
+        # data['drone_y'] = data['drone_y'] / 1000.00
+        # data['drone_z'] = data['drone_z'] / 1000.00
+        
+        # waypoints = data[['drone_x', 'drone_y', 'drone_z']].values
+        
+        # print(waypoints)
         return waypoints
     except Exception as e:
         print(f"Error loading waypoints: {e}")

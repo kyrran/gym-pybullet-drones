@@ -11,7 +11,7 @@ class Weight:
     
     
     
-    MASS: float = 0.00005
+    MASS: float = 0.000005
     RADIUS: float = 0.05
 
     _body_centre_top = np.array([0, 0, RADIUS], dtype=np.float32)

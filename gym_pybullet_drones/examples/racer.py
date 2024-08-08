@@ -157,6 +157,9 @@ def run(
         #### Go to the next way point ##############################
         wp_counters += 1
         
+        if np.all(wp_counters >= len(TARGET_POS)):
+            print("reached")
+        
         #### Get payload position ##################################
         payload_position = weight.get_position()
         #print(payload_position)
