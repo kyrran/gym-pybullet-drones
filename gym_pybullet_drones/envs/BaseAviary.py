@@ -36,7 +36,8 @@ class BaseAviary(gym.Env):
                  obstacles=False,
                  user_debug_gui=True,
                  vision_attributes=False,
-                 output_folder='results'
+                 output_folder='results',
+                 client=None
                  ):
         """Initialization of a generic aviary environment.
 
@@ -145,7 +146,8 @@ class BaseAviary(gym.Env):
                 for i in range(self.NUM_DRONES):
                     os.makedirs(os.path.dirname(self.ONBOARD_IMG_PATH+"/drone_"+str(i)+"/"), exist_ok=True)
         #### Connect to PyBullet ###################################
-        if self.GUI:
+        self.CLIENT = client
+        if self.GUI and self.CLIENT is None:
             #### With debug GUI ########################################
             self.CLIENT = p.connect(p.GUI) # p.connect(p.GUI, options="--opengl2")
             # p.getCameraImage(1080,2400)
@@ -219,7 +221,7 @@ class BaseAviary(gym.Env):
     ################################################################################
 
     def reset(self,
-              seed : int = None,
+              seed : int = 42,
               options : dict = None):
         """Resets the environment.
 
