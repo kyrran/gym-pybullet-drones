@@ -11,7 +11,7 @@ This project is an initial exploration into building a stable simulation that co
 Tested on Ubuntu 22.04
 
 ```
-git clone https://github.com/AerialRoboticsGroup/agile-tethered-perching.git
+git clone https://github.com/kyrran/gym-pybullet-drones
 cd gym-pybullet-drones/
 
 conda create -n drones python=3.10
