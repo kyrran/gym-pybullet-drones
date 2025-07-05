@@ -150,12 +150,9 @@ class TetherModelSimulationEnvPID(BaseAviary):
         if variable is not None:
             self.tether = Tether(self.getDroneIds(), length=1.0, drone_position=self.drone_init_pos, physics_client=self.CLIENT)
         else:
-            random_tether_length = np.random.choice([1.0])
+            random_tether_length = getattr(self, "tether_length", 1.0)
+            # random_tether_length = np.random.choice([1.0])
             self.tether = Tether(self.getDroneIds(), length=random_tether_length, drone_position=self.drone_init_pos, physics_client=self.CLIENT)
-        
-        
-        
-        
         
         self.tether.attach_to_drone(self.getDroneIds())
         payload_start_position_top = self.tether.get_world_centre_bottom()
@@ -163,11 +160,12 @@ class TetherModelSimulationEnvPID(BaseAviary):
         if variable is not None:
             self.weight = Weight(payload_start_position_top)
         else:
-            random_weight_mass = np.random.choice([1e-6])
+            random_weight_mass = getattr(self, "weight_mass", 1e-6)
+            # random_weight_mass = np.random.choice([1.8e-6])
             self.weight = Weight(payload_start_position_top, mass = random_weight_mass )
             
         print_red(f"Tether Length:{self.tether.length}, Weight Mass:{self.weight.mass_weight}")
-        
+        print_green(f"Drone Start Position: {self.drone_init_pos}")
         self.tether.attach_weight(self.weight)
         
         # self.TARGET_POS = np.array([0,0,3.2])

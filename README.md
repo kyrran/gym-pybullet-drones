@@ -109,6 +109,14 @@ $\mathbf{R}{\text{approach}}$ is the sum of four terms – $r_{\text{proximity}}
 |:--:|:--:|
 | **(d)** $p_{\text{zone}}$: penalises entry into undesirable regions that we think it's unnecessary to explore. | **(e)** $r_{\text{tether}}$: rewards consecutive tether contact with the branch |
 
+
+## Thrust Comparision between RL Agents
+The thrust data were extracted from simulations conducted with a tether length of $1\,\text{m}$ and a payload mass of $6\times10^{-7}\,\text{kg}$. The plot presents the thrust profiles for all successful perching manoeuvres.
+
+![thrust](gym_pybullet_drones/assets/thrust.png) 
+
+
+
                                              
 ## Future Work
 - [ ] Investigate higher-level control strategies, such as velocity-based control, to enhance precision and performance beyond position control.
