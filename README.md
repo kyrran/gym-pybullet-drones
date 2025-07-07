@@ -11,7 +11,7 @@ This project is an initial exploration into building a stable simulation that co
 Tested on Ubuntu 22.04
 
 ```
-git clone https://github.com/kyrran/gym-pybullet-drones
+git clone https://github.com/AerialRoboticsGroup/agile-tethered-perching.git
 cd gym-pybullet-drones/
 
 conda create -n drones python=3.10
@@ -93,7 +93,8 @@ The PID parameters for the drone control are defined in `gym_pybullet_drones/con
 | Pitch| 70000.0 | 0.0 | 20000.0 |
 | Yaw | 60000.0 | 500.0 | 12000.0 |
 
-## Reward $\mathbf{R}_{\text{approach}}$ Break-down
+## Reward Visualisation 
+### Reward $\mathbf{R}_{\text{approach}}$ Break-down
 
 $\mathbf{R}{\text{approach}}$ is the sum of four terms – $r_{\text{proximity}}$, $r_{\text{endwaypoint}}$, $r_{\text{tether}}$, and $p_{\text{zone}}$. 
 
@@ -103,17 +104,40 @@ $\mathbf{R}{\text{approach}}$ is the sum of four terms – $r_{\text{proximity}}
 
 | ![r proximity](gym_pybullet_drones/assets/r_proximity.png) | ![r endwp](gym_pybullet_drones/assets/r_endwaypoint.png) |
 |:--:|:--:|
-| **(b)** $r_{\text{proximity}}$: encourages the drone to move closer to the branch without collision. | **(c)** $r_{\text{endwaypoint}}$: rewards reaching the ideal final approaching waypoint that we blelive it has the best chance to wrap. |
+| **(b)** $r_{\text{proximity}}$: encourages the drone to move closer to the branch without collision. | **(c)** $r_{\text{endwaypoint}}$: rewards reaching the ideal final waypoint at approaching stage. |
 
 | ![p zone](gym_pybullet_drones/assets/p_zone_heatmap.png) | ![r tether](gym_pybullet_drones/assets/r_tether_heatmap.png) |
 |:--:|:--:|
-| **(d)** $p_{\text{zone}}$: penalises entry into undesirable regions that we think it's unnecessary to explore. | **(e)** $r_{\text{tether}}$: rewards consecutive tether contact with the branch |
+| **(d)** $p_{\text{zone}}$: penalises entry into undesirable regions that we think it's unnecessary to explore. | **(e)** $r_{\text{tether}}$: rewards consecutive tether contact with the branch. |
+
+### Reward $\mathbf{R}_{\text{wrap}}$ Visualisation
+This reward encourages the tether to wrap around the branch, with a heuristic goal of achieving two wraps. 
+
+![thrust](gym_pybullet_drones/assets/wrap.png) 
+
+### Reward $\mathbf{R}_{\text{hang}}$ Visualisation
+The hanging reward function encourages the drone to reach a stable hanging position within a safe zone, defined by a box-shaped region around the optimal hanging point. The reward decays smoothly as the drone deviates from this zone. Upon the drone reaching this bounding box, the episode is terminated. Notely, this work mainly focuses on approaching and wrapping stage.
+
+![thrust](gym_pybullet_drones/assets/hang.png) 
+
+### Reward $\mathbf{P}_{\text{collision}}$ Visualisation
+This term softly penalizes the drone for being too close to the branch, at wrapping and hanging stage.
+
+![thrust](gym_pybullet_drones/assets/p_collision.png) 
+
+
 
 
 ## Thrust Comparision Between RL Agents
-The thrust data were extracted from simulations conducted with a tether length of $1\,\text{m}$ and a payload mass of $6\times10^{-7}\,\text{kg}$. The plot presents the thrust profiles for all successful perching manoeuvres. We sampled one succesful trajectory per each agent.
+The thrust data were extracted from simulations conducted with a tether length of $1\text{m}$ and a payload mass of $6\times10^{-7}\,\text{kg}$. The plot presents the thrust profiles for all successful perching manoeuvres. We sampled one succesful trajectory per each agent. The success defined in the simulation involves observed wrapping, and the case when the failed wrapping is caused by payload hit the tether in the simulation but emperically it would wrap around in real-world experiments.
 
 ![thrust](gym_pybullet_drones/assets/thrust.png) 
+
+
+## Acceleration Comparision Between RL Agents
+The accelration data were extracted from rosbags recorded from real-world experiments in Aerial Robotics Lab, Imperial College London. All experiments were conducted with a tether length of 1 meter and a payload mass of 10 gram. The plot presents the accelaration profiles for each successful perching trajectory per each agent, in our real-world experiments. The success defined here means the proper wrapping was observed.
+
+![thrust](gym_pybullet_drones/assets/acceleration.png) 
 
 
 ## Reward over Different Training Steps
