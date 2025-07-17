@@ -1,4 +1,7 @@
-# Learning Agile Tensile Perching for Aerial Robots from Demonstration
+# Learning Agile Tensile Perching for Aerial Robots from Demonstrations
+
+> **_NOTE:_ This repo is only for author's personal use to record and update the project occasionally. The official repository is at [Aerial Robotics Group](https://github.com/AerialRoboticsGroup/agile-tethered-perching).** The webpage of this project can be accessed through [here](https://kyrran.github.io/learning_agile_tensile_drone_perching_from_demo/).
+
 
 - [Arxiv](https://arxiv.org/pdf/2507.06172)
 - [Webpage](https://kyrran.github.io/learning_agile_tensile_drone_perching_from_demo/)
